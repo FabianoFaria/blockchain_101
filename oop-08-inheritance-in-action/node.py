@@ -66,6 +66,35 @@ def get_balance():
         }
         return jsonify(response), 500
 
+@app.route('/broadcast-transaction', methods=['POST'])
+def broadcast_transaction():
+    values = request.get_json()
+    if not values:
+        response = {'message': 'Nenhum dado encontrado.'}
+        return jsonify(response), 400
+    required = ['sender', 'recipient', 'amount', 'signatures']
+    if not all(key in values for key in required):
+        response = {'message': 'Alguns dados estão faltando.'}
+        return jsonify(response), 400
+    success = blockchain.add_transaction(values['recipient'], values['sender'], values['amount'], values['signature'], is_receiving = True)
+    if success:
+        response = {
+            'message':'Transação concluída com sucesso!!!',
+            'transaction':{
+                'sender': values['sender'],
+                'recipient': values['recipient'],
+                'amount':values['amount'],
+                'signature':values['signature']
+            }
+        }
+        return jsonify(response), 200
+    else:
+        response = {
+            'message':'Falha ao processar transação!!!'
+        }
+        return jsonify(response), 500
+
+
 @app.route('/transaction',methods=['POST'])
 def add_transaction():
     if wallet.public_key == None:
