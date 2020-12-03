@@ -76,7 +76,7 @@ def broadcast_transaction():
     if not all(key in values for key in required):
         response = {'message': 'Alguns dados estão faltando.'}
         return jsonify(response), 400
-    success = blockchain.add_transaction(values['recipient'], values['sender'], values['amount'], values['signature'], is_receiving = True)
+    success = blockchain.add_transaction(values['recipient'], values['sender'],values['signature'], values['amount'],  is_receiving = True)
     if success:
         response = {
             'message':'Transação concluída com sucesso!!!',
@@ -94,6 +94,24 @@ def broadcast_transaction():
         }
         return jsonify(response), 500
 
+@app.route('/broadcast-block', methods=['POST'])
+def broadcast_block():
+    values = request.get_json()
+    if not values:
+        response = {'message': 'Nenhum dado encontrado.'}
+        return jsonify(response), 400
+    if 'block' not in values:
+        response = {'message': 'Alguns dados estão faltando.'}
+        return jsonify(response), 400
+    block = values['block']
+    if block['index'] == blockchain.chain[-1].index + 1:
+        blockchain.add_block(block)
+    elif block['index'] > blockchain.chain[-1].index:
+        pass
+    else:
+        response = {'message': 'Blockchain parece ser curto, bloco não adicionado!'}
+        return jsonify(response), 409
+        
 
 @app.route('/transaction',methods=['POST'])
 def add_transaction():
