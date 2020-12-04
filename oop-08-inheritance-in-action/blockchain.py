@@ -158,8 +158,9 @@ class Blockchain:
         #     'recipient': recipient,
         #     'amount': amount
         # }
-        if self.public_key == None:
-            return False
+
+        #if self.public_key == None:
+        #    return False
         transaction = Transaction(sender, recipient, signature, amount)
         if Verification.verify_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
@@ -171,6 +172,7 @@ class Blockchain:
                         response = requests.post(url, json={'sender':sender, 'recipient':recipient, 'amount': amount, 'signature': signature})
                         if response.status_code == 400 or response.status_code == 500:
                             print('Transação recusada, precisa resolver.')
+                            print(url)
                             return False
                     except requests.exceptions.ConnectionError:
                         continue
@@ -205,12 +207,22 @@ class Blockchain:
         self.__chain.append(block)
         self.__open_transactions = []
         self.save_data()
+        for node in self.__peer_nodes:
+            url = 'http://{}/broadcast-block'.format(node)
+            converted_block = block.__dict__.copy()
+            converted_block['transactions'] = [tx.__dict__ for tx in converted_block['transactions']]
+            try:
+                response = requests.post(url, json={'block': converted_block})
+                if response.status_code == 400 or response.status_code == 500:
+                    print('Bloco recusado, precisa resolver.')
+            except requests.exceptions.ConnectionError:
+                continue
         return block
 
     def add_block(self, block):
-        transactions = [Transaction(tx['sender'], tx['recipient'], tx['signature'], tx['amount']) for tx in block ['transaction']]
-        proof_is_valid = Verification.valid_proof(transactions, block['previous_hash'], block['proof'])
-        hashees_match = hash_block(self.chain[-1]) == block['previous_hsah']
+        transactions = [Transaction(tx['sender'], tx['recipient'], tx['signature'], tx['amount']) for tx in block ['transactions']]
+        proof_is_valid = Verification.valid_proof(transactions[:-1], block['previous_hash'], block['proof'])
+        hashees_match = hash_block(self.chain[-1]) == block['previous_hash']
         if not proof_is_valid or not hashees_match:
             return False
         converted_block = Block(block['index'], block['previous_hash'], transactions, block['proof'], block['timestamp'])
