@@ -29,6 +29,7 @@ class Blockchain:
         self.public_key = public_key
         self.__peer_nodes = set()
         self.node_id = node_id
+        self.resolve_conflicts = False
         self.load_data()
 
     @property
@@ -227,6 +228,14 @@ class Blockchain:
             return False
         converted_block = Block(block['index'], block['previous_hash'], transactions, block['proof'], block['timestamp'])
         self.__chain.append(converted_block)
+        stored_transactions = self.__open_transactions[:]
+        for itx in block['transactions']:
+            for opentx in stored_transactions:
+                if opentx.sender == itx['sender'] and opentx.recipient == itx['recipient'] and opentx.amount == itx['amount'] and opentx.signature == itx['signature']:
+                    try:
+                        self.__open_transactions.remove(opentx)
+                    except ValueError:
+                        print('Item já foi removido!')
         self.save_data()
         return True
 
