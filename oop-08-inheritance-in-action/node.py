@@ -72,7 +72,7 @@ def broadcast_transaction():
     if not values:
         response = {'message': 'Nenhum dado encontrado.'}
         return jsonify(response), 400
-    required = ['sender', 'recipient', 'amount', 'signatures']
+    required = ['sender', 'recipient', 'amount', 'signature']
     if not all(key in values for key in required):
         response = {'message': 'Alguns dados estão faltando.'}
         return jsonify(response), 400
@@ -113,6 +113,7 @@ def broadcast_block():
             return jsonify(response), 409
     elif block['index'] > blockchain.chain[-1].index:
         response = {'message': 'Blockchain parece ser diferente do bloco local!'}
+        blockchain.resolve_conflicts = True
         return jsonify(response), 200
     else:
         response = {'message': 'Blockchain parece ser curto, bloco não adicionado!'}
@@ -163,6 +164,9 @@ def add_transaction():
 
 @app.route('/mine', methods=['POST'])
 def mine():
+    if blockchain.resolve_conflicts:
+        response = {'message': 'Resolva os conflitos, bloco não adicionado!'}
+        return jsonify(response), 409
     block = blockchain.mine_block()
     if block != None:
         dict_block = block.__dict__.copy()
