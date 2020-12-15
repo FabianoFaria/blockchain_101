@@ -184,6 +184,15 @@ def mine():
         }
         return jsonify(response), 500
 
+@app.route('/resolve-conflicts', methods=['POST'])
+def resolve_conflicts():
+    replaced = blockchain.resolve()
+    if replaced:
+        response = {'message': 'Chain foi substituida!'}
+    else:
+        response = {'message':'Chain local foi mantida!'}
+    return jsonify(response), 200
+
 @app.route('/transactions', methods=['GET'])
 def get_open_transaction():
     transactions = blockchain.get_open_transactions()

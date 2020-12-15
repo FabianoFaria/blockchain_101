@@ -146,6 +146,7 @@
                 <div class="col">
                     <button class="btn btn-primary" @click="onLoadData">{{ view === 'chain' ? 'Carregar Blockchain' : 'Carregar Transações' }}</button>
                     <button v-if="view === 'chain' && wallet" class="btn btn-success" @click="onMine">Minerar moedas</button>
+                    <button class="btn btn-warning" @click="onResolve">Resolver conflito</button>
                 </div>
             </div>
             <div class="row">
@@ -314,6 +315,18 @@
                             vm.error = error.response.data.message;
                         });
 
+                },
+                onResolve: function(){
+                    var vm = this;
+                    axios.post('/resolve-conflicts')
+                        .then(function(response){
+                            vm.success = response.data.message;
+                            vm.error = null;
+                        })
+                        .catch(function (error){
+                            vm.success = null;
+                            vm.error = error.response.data.message;
+                        });
                 },
                 onLoadData: function () {
                     if (this.view === 'chain') {
